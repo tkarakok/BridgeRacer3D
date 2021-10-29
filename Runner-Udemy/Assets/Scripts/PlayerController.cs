@@ -15,20 +15,42 @@ public class PlayerController : MonoBehaviour
 
     private BridgeSpawner _bridgeSpawner;
     private float _creatingBridgeTimer;
+    public Animator animator;
+
+    private bool _finished = false;
+    private float _scoreTimer = 0;
+
+    private float _lastTouchedX;
+    private float _dropSoundTimer;
+    public AudioSource cylinderAudioSource,triggerAudioSource;
+    public AudioClip gatherAudioClip, dropAudioClip,coinAudioClip;
 
     private void Start()
     {
         Current = this;
-        _currentRunningSpeed = runningSpeed;
+
     }
 
     private void Update()
     {
+        if (LevelController.Current == null || !LevelController.Current.gameActive)
+        {
+            return;
+        }
         float newX = 0;
         float touchXDelta = 0;
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Moved)
+        if (Input.touchCount > 0)
         {
-            touchXDelta = Input.GetTouch(0).deltaPosition.x / Screen.width;
+            if (Input.GetTouch(0).phase == TouchPhase.Began)
+            {
+                _lastTouchedX = Input.GetTouch(0).position.x;
+            }
+            else if (Input.GetTouch(0).phase == TouchPhase.Moved)
+            {
+                touchXDelta = 5 * (_lastTouchedX - Input.GetTouch(0).position.x) / Screen.width;
+                _lastTouchedX = Input.GetTouch(0).position.x;
+            }
+
         }
         else if (Input.GetMouseButton(0))
         {
@@ -43,9 +65,11 @@ public class PlayerController : MonoBehaviour
 
         if (_spawnBridge)
         {
+
             _creatingBridgeTimer -= Time.deltaTime;
             if (_creatingBridgeTimer < 0)
             {
+                PlayDropSound();
                 _creatingBridgeTimer = .1f;
                 IncrementCylinderVolume(-.1f);
                 GameObject createdBridgePiece = Instantiate(bridgePiecePrefab);
@@ -54,18 +78,33 @@ public class PlayerController : MonoBehaviour
                 direction = direction.normalized;
                 createdBridgePiece.transform.forward = direction;
                 float characterDistance = transform.position.z - _bridgeSpawner.startReference.transform.position.z;
-                characterDistance = Mathf.Clamp(characterDistance,0,distance);
+                characterDistance = Mathf.Clamp(characterDistance, 0, distance);
                 Vector3 newPiecePosition = _bridgeSpawner.startReference.transform.position + direction * characterDistance;
                 newPiecePosition.x = transform.position.x;
                 createdBridgePiece.transform.position = newPiecePosition;
+
+                if (_finished)
+                {
+                    _scoreTimer -= Time.deltaTime * 75;
+                    if (_scoreTimer < 0)
+                    {
+                        _scoreTimer = 0.3f;
+                        LevelController.Current.ChangeScore(1);
+                    }
+                }
             }
         }
     }
 
+    public void ChangeSpeed(float value)
+    {
+        _currentRunningSpeed = value;
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "AddCylinder")
         {
+            cylinderAudioSource.PlayOneShot(gatherAudioClip, 0.1f);
             Destroy(other.gameObject);
             IncrementCylinderVolume(0.1f);
         }
@@ -76,17 +115,46 @@ public class PlayerController : MonoBehaviour
         else if (other.tag == "StopSpawnBridge")
         {
             StopSpawnBridge();
+            if (_finished)
+            {
+                LevelController.Current.FinishGame();
+            }
+        }
+        else if (other.tag == "Finish")
+        {
+            _finished = true;
+            StartSpawningBridge(other.transform.parent.GetComponent<BridgeSpawner>());
+        }else if (other.tag == "coin")
+        {
+            triggerAudioSource.PlayOneShot(coinAudioClip,.1f);
+            other.tag = "Untagged";
+            LevelController.Current.ChangeScore(10);
+            Destroy(other.gameObject);
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.tag == "Trap")
+        if (LevelController.Current.gameActive)
         {
-            IncrementCylinderVolume(-Time.fixedDeltaTime);
+            if (other.tag == "Trap")
+            {
+                PlayDropSound();
+                IncrementCylinderVolume(-Time.fixedDeltaTime);
+            }
         }
+
     }
 
+    public void PlayDropSound()
+    {
+        _dropSoundTimer -= Time.deltaTime * 100;
+        if (_dropSoundTimer < 0)
+        {
+            _dropSoundTimer = .15f;
+            cylinderAudioSource.PlayOneShot(dropAudioClip, .1f);
+        }
+    }
     public void IncrementCylinderVolume(float value)
     {
         if (cylinders.Count == 0)
@@ -97,7 +165,14 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // game over
+                if (_finished)
+                {
+                    LevelController.Current.FinishGame();
+                }
+                else
+                {
+                    Die();
+                }
             }
         }
         else
@@ -105,6 +180,15 @@ public class PlayerController : MonoBehaviour
             cylinders[cylinders.Count - 1].IncrementCylinderVolume(value);
         }
     }
+
+    public void Die()
+    {
+        animator.SetBool("dead", true);
+        gameObject.layer = 6;
+        Camera.main.transform.SetParent(null);
+        LevelController.Current.GameOver();
+    }
+
     public void CreateCylinder(float value)
     {
         RidingCylinder createdCylinder = Instantiate(ridingCylinderPrefab, transform).GetComponent<RidingCylinder>();
@@ -126,6 +210,7 @@ public class PlayerController : MonoBehaviour
 
     public void StopSpawnBridge()
     {
+
         _spawnBridge = false;
     }
 
