@@ -25,20 +25,18 @@ public class LevelController : MonoBehaviour
         //PlayerPrefs.DeleteAll();
         Current = this;
         currentLevel = PlayerPrefs.GetInt("currentLevel");
-        if (SceneManager.GetActiveScene().name != "Level " + currentLevel)
-        {
-            SceneManager.LoadScene("Level " + currentLevel);
-        }
-        else
-        {
-            dailyReward.InitializeDailyReward();
-            int money = PlayerPrefs.GetInt("money");
-            startMoneyText.text = money.ToString();
-            currentLevelText.text = (currentLevel + 1).ToString();
-            nextLevelText.text = (currentLevel + 2).ToString();
-        }
+
+        PlayerController.Current = GameObject.FindObjectOfType<PlayerController>();
+        GameObject.FindObjectOfType<ShopController>().IntializeShopController();
+        dailyReward.InitializeDailyReward();
+        int money = PlayerPrefs.GetInt("money");
+        startMoneyText.text = money.ToString();
+        currentLevelText.text = (currentLevel + 1).ToString();
+        nextLevelText.text = (currentLevel + 2).ToString();
+
         gameMusicAudioSource = Camera.main.GetComponent<AudioSource>();
         UpdateMoneyText();
+        //GiveMoneyToPlayer();
     }
     private void Update()
     {
@@ -61,12 +59,12 @@ public class LevelController : MonoBehaviour
 
     public void Restart()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        LevelLoader.Current.ChangeLevel(SceneManager.GetActiveScene().name);
     }
 
     public void LoadNextLevel()
     {
-        SceneManager.LoadScene("Level " + (currentLevel + 1));
+        LevelLoader.Current.ChangeLevel("Level " + (currentLevel + 1));
     }
 
     public void GameOver()
@@ -108,7 +106,7 @@ public class LevelController : MonoBehaviour
     public void GiveMoneyToPlayer(int increment)
     {
         int money = PlayerPrefs.GetInt("money");
-        money += Mathf.Max(0,money + increment);
+        money += Mathf.Max(0, money + increment);
         PlayerPrefs.SetInt("money", money);
         UpdateMoneyText();
     }

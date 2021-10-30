@@ -10,9 +10,11 @@ public class DailyReward : MonoBehaviour
     public GameObject rewardMenu;
     public Text remainingTimeText;
 
-    public void InitializeDailyReward(){
-        
-        PlayerPrefs.SetString("lastDailyReward" , (System.DateTime.Now.Ticks - 864000000000 + 5*10000000 ).ToString());
+
+    public void InitializeDailyReward()
+    {
+         
+        PlayerPrefs.SetString("lastDailyReward", (System.DateTime.Now.Ticks - 864000000000 + 5 * 10000000).ToString());
         if (PlayerPrefs.HasKey("lastDailyReward"))
         {
             rewardGivingTimeTicks = long.Parse(PlayerPrefs.GetString("lastDailyReward")) + 864000000000;
@@ -21,7 +23,8 @@ public class DailyReward : MonoBehaviour
             {
                 GiveReward();
             }
-        }else
+        }
+        else
         {
             GiveReward();
         }
@@ -29,14 +32,16 @@ public class DailyReward : MonoBehaviour
     }
 
 
-    public void GiveReward(){
-            LevelController.Current.GiveMoneyToPlayer(100);
-            rewardMenu.SetActive(true);
-            PlayerPrefs.SetString("lastDailyReward" , System.DateTime.Now.Ticks.ToString());
-            rewardGivingTimeTicks = long.Parse(PlayerPrefs.GetString("lastDailyReward")) + 864000000000;
+    public void GiveReward()
+    {
+        LevelController.Current.GiveMoneyToPlayer(100);
+        rewardMenu.SetActive(true);
+        PlayerPrefs.SetString("lastDailyReward", System.DateTime.Now.Ticks.ToString());
+        rewardGivingTimeTicks = long.Parse(PlayerPrefs.GetString("lastDailyReward")) + 864000000000;
     }
 
-    private void Update() {
+    private void Update()
+    {
         if (initialized)
         {
             if (LevelController.Current.startMenu.activeInHierarchy)
@@ -46,17 +51,19 @@ public class DailyReward : MonoBehaviour
                 if (remainingTime <= 0)
                 {
                     GiveReward();
-                }else
+                }
+                else
                 {
                     System.TimeSpan timeSpan = System.TimeSpan.FromTicks(remainingTime);
-                    remainingTimeText.text = string.Format("{0}:{1}:{2}",timeSpan.Hours.ToString("D2"),timeSpan.Minutes.ToString("D2"),timeSpan.Seconds.ToString("D2"));
+                    remainingTimeText.text = string.Format("{0}:{1}:{2}", timeSpan.Hours.ToString("D2"), timeSpan.Minutes.ToString("D2"), timeSpan.Seconds.ToString("D2"));
 
                 }
             }
         }
     }
 
-    public void TapToReturn(){
+    public void TapToReturn()
+    {
         rewardMenu.SetActive(false);
     }
 

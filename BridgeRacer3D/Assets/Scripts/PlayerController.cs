@@ -22,14 +22,11 @@ public class PlayerController : MonoBehaviour
 
     private float _lastTouchedX;
     private float _dropSoundTimer;
-    public AudioSource cylinderAudioSource,triggerAudioSource;
-    public AudioClip gatherAudioClip, dropAudioClip,coinAudioClip;
+    public AudioSource cylinderAudioSource,triggerAudioSource, itemAudioSource;
+    public AudioClip gatherAudioClip, dropAudioClip,coinAudioClip, buyAudioClip,equipItemAudioClip,unEquipItemAudioClip;
 
-    private void Start()
-    {
-        Current = this;
+    public List<GameObject> wearSpots;
 
-    }
 
     private void Update()
     {
@@ -47,7 +44,7 @@ public class PlayerController : MonoBehaviour
             }
             else if (Input.GetTouch(0).phase == TouchPhase.Moved)
             {
-                touchXDelta = 5 * (_lastTouchedX - Input.GetTouch(0).position.x) / Screen.width;
+                touchXDelta = 5 * (Input.GetTouch(0).position.x -  _lastTouchedX) / Screen.width;
                 _lastTouchedX = Input.GetTouch(0).position.x;
             }
 
@@ -72,7 +69,8 @@ public class PlayerController : MonoBehaviour
                 PlayDropSound();
                 _creatingBridgeTimer = .1f;
                 IncrementCylinderVolume(-.1f);
-                GameObject createdBridgePiece = Instantiate(bridgePiecePrefab);
+                GameObject createdBridgePiece = Instantiate(bridgePiecePrefab, this.transform);
+                createdBridgePiece.transform.SetParent(null);
                 Vector3 direction = _bridgeSpawner.endReference.transform.position - _bridgeSpawner.startReference.transform.position;
                 float distance = direction.magnitude;
                 direction = direction.normalized;
