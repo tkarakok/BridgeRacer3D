@@ -22,7 +22,7 @@ public class RidingCylinder : MonoBehaviour
             PlayerController.Current.DestroyCylinder(this);
         }else
         {
-             int cylinderCount = PlayerController.Current.cylinders.Count;
+            int cylinderCount = PlayerController.Current.cylinders.Count;
             transform.localPosition = new Vector3(transform.localPosition.x, -0.5f * (cylinderCount -1 )* _value ,transform.localPosition.z); 
             transform.localScale = new Vector3(0.5f * _value,transform.localScale.y,0.5f*_value);
 
